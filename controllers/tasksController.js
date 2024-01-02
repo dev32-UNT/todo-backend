@@ -8,7 +8,6 @@ const getAllTasks = async (req, res) => {
 };
 
 
-
 const getTaskById = async (req, res) => {
     const task = await Task.findOne({ _id: req.params.id, user: req.user.userId });
     if (!task)
@@ -17,11 +16,21 @@ const getTaskById = async (req, res) => {
 };
 
 const createTask = async (req, res) => {
-    const { title, description, date, completed } = req.body;
-    const task = await Task.create({
-        title, description, date, completed, user: req.user.userId
-    });
-    res.status(StatusCodes.CREATED).json(task);
+    // Check if the request body contains an array of tasks
+    const tasksData = Array.isArray(req.body) ? req.body : [req.body];
+
+    const createdTasks = [];
+
+    // Iterate over each task data and create a task
+    for (const taskData of tasksData) {
+        const { title, description, date, completed } = taskData;
+        const task = await Task.create({
+            title, description, date, completed, user: req.user.userId
+        });
+        createdTasks.push(task);
+    }
+
+    res.status(StatusCodes.CREATED).json(createdTasks);
 };
 
 const updateTask = async (req, res) => {
@@ -38,11 +47,16 @@ const deleteTask = async (req, res) => {
     await Task.deleteOne({ _id: req.params.id, user: req.user.userId });
     res.status(StatusCodes.OK).json('Successfully deleted.');
 };
+const deleteAllTasks = async (req, res) => {
+    await Task.deleteMany({ user: req.user.userId });
+    res.status(StatusCodes.OK).json('All tasks deleted.');
+};
 
 module.exports = {
     getAllTasks,
     getTaskById,
     createTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    deleteAllTasks
 };
