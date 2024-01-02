@@ -7,31 +7,7 @@ const getAllTasks = async (req, res) => {
     res.status(StatusCodes.OK).json(tasks);
 };
 
-const getAllTasksPaginated = async (req, res) => {
-    const { sort } = req.query;
 
-    let result = Task.find({ user: req.user.userId });
-
-    if (sort) {
-        let sortColumn = sort.split('|')[0];
-        let sortDirection = sort.split('|')[1] === 'DESC' ? '-' : '';
-        result = result.sort(`${sortDirection}${sortColumn}`);
-    } else {
-        result = result.sort('-createdAt');
-    }
-
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    result = result.skip(skip).limit(limit);
-
-    const tasks = await result;
-
-    const totalTasks = await Task.countDocuments({ user: req.user.userId });
-    const numOfPages = Math.ceil(totalTasks / limit);
-    res.status(StatusCodes.OK).json({ tasks, totalTasks, numOfPages });
-};
 
 const getTaskById = async (req, res) => {
     const task = await Task.findOne({ _id: req.params.id, user: req.user.userId });
@@ -41,9 +17,9 @@ const getTaskById = async (req, res) => {
 };
 
 const createTask = async (req, res) => {
-    const { title, description, date } = req.body;
+    const { title, description, date, completed } = req.body;
     const task = await Task.create({
-        title, description, date, user: req.user.userId
+        title, description, date, completed, user: req.user.userId
     });
     res.status(StatusCodes.CREATED).json(task);
 };
@@ -65,7 +41,6 @@ const deleteTask = async (req, res) => {
 
 module.exports = {
     getAllTasks,
-    getAllTasksPaginated,
     getTaskById,
     createTask,
     updateTask,
